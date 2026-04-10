@@ -39,5 +39,7 @@ Replace the SUPABASE_URL and SUPABASE_KEY values in index.html
 
 
 About me
-Built by Aidai Elbekova — Business Development professional with 10+ years in Fintech and E-Commerce, currently researching Digital Transformation at University of Kassel. This project is part of my journey into product development and building things from scratch.
-LinkedIn · Notion Portfolio
+
+
+Built by Aidai Elbekova, Business Development professional with 10+ years in Fintech and E-Commerce, currently researching Digital Transformation at University of Kassel. This project is part of my journey into product development and building things from scratch.
+
