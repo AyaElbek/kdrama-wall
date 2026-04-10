@@ -449,6 +449,46 @@
   #loadingScreen h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 400; color: var(--text); }
   #loadingScreen p  { font-size: 0.78rem; color: var(--muted); font-style: italic; }
 
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    align-items: center; margin-bottom: 20px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 16px; padding: 12px 16px;
+  }
+  .filter-group {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .filter-group label {
+    font-size: 0.68rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.05em; white-space: nowrap; font-family: 'Jost', sans-serif;
+  }
+  .filter-select {
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 5px 10px; font-size: 0.72rem; font-family: 'Jost', sans-serif;
+    color: var(--text); background: var(--cream); outline: none;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .filter-select:focus { border-color: var(--accent); }
+  .filter-divider {
+    width: 1px; height: 20px; background: var(--border);
+  }
+  .filter-search {
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 5px 12px; font-size: 0.72rem; font-family: 'Jost', sans-serif;
+    color: var(--text); background: var(--cream); outline: none;
+    transition: border-color 0.2s; min-width: 140px;
+  }
+  .filter-search:focus { border-color: var(--accent); }
+  .filter-search::placeholder { color: #c0a8b8; }
+  .btn-clear-filters {
+    font-size: 0.68rem; color: var(--muted); background: none;
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 5px 12px; cursor: pointer; font-family: 'Jost', sans-serif;
+    transition: all 0.2s; margin-left: auto;
+  }
+  .btn-clear-filters:hover { color: var(--accent); border-color: var(--accent); }
+
   @media (max-width: 600px) {
     .nav { padding: 0 14px; }
     .main { padding: 16px; }
@@ -523,13 +563,62 @@
         <span class="share-url" id="shareUrl"></span>
         <button class="btn-copy" onclick="copyShareLink()">Copy link</button>
       </div>
-      <div class="filters" id="myFilters">
-        <button class="filter-btn active" data-mood="all" onclick="setFilter('all',this)">All</button>
-        <button class="filter-btn" data-mood="cozy"  onclick="setFilter('cozy',this)">🧸 Cozy</button>
-        <button class="filter-btn" data-mood="cry"   onclick="setFilter('cry',this)">💔 Cry</button>
-        <button class="filter-btn" data-mood="hype"  onclick="setFilter('hype',this)">🔥 Hype</button>
-        <button class="filter-btn" data-mood="laugh" onclick="setFilter('laugh',this)">😂 Laugh</button>
-        <button class="filter-btn" data-mood="slow"  onclick="setFilter('slow',this)">🌙 Slow Burn</button>
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Mood</label>
+          <select class="filter-select" id="filterMood" onchange="applyFilters()">
+            <option value="">All moods</option>
+            <option value="cozy">🧸 Cozy</option>
+            <option value="cry">💔 Cry-worthy</option>
+            <option value="hype">🔥 Hype</option>
+            <option value="laugh">😂 Laugh</option>
+            <option value="slow">🌙 Slow Burn</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <label>Genre</label>
+          <select class="filter-select" id="filterGenre" onchange="applyFilters()">
+            <option value="">All genres</option>
+            <option value="campus">🏫 Campus</option>
+            <option value="historical">⚔️ Historical</option>
+            <option value="fantasy">🌀 Fantasy</option>
+            <option value="contract">💼 Contract</option>
+            <option value="revenge">🎭 Revenge</option>
+            <option value="classic">🌹 Classic</option>
+            <option value="romance">💕 Romance</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <label>Rating</label>
+          <select class="filter-select" id="filterRating" onchange="applyFilters()">
+            <option value="">Any rating</option>
+            <option value="5">★★★★★ 5 stars</option>
+            <option value="4">★★★★☆ 4+ stars</option>
+            <option value="3">★★★☆☆ 3+ stars</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <label>Era</label>
+          <select class="filter-select" id="filterEra" onchange="applyFilters()">
+            <option value="">Any year</option>
+            <option value="2020s">2020s</option>
+            <option value="2010s">2010s</option>
+            <option value="2000s">2000s &amp; earlier</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <label>Actor</label>
+          <select class="filter-select" id="filterActor" onchange="applyFilters()">
+            <option value="">Any actor</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <input class="filter-search" id="filterSearch" placeholder="🔍 Search title..." oninput="applyFilters()" />
+        <button class="btn-clear-filters" onclick="clearFilters()">✕ Clear</button>
       </div>
       <div class="drama-grid" id="myGrid"></div>
     </div>
@@ -886,19 +975,89 @@ function copyShareLink() {
   navigator.clipboard.writeText(url).then(() => toast('Link copied! 🔗'));
 }
 
-function setFilter(mood, btn) {
-  myFilter = mood;
-  document.querySelectorAll('#myFilters .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderMyWall();
+// ── ACTOR INDEX ──
+const ACTOR_MAP = {
+  'Hyun Bin':        ['Crash Landing on You','Secret Garden'],
+  'IU':              ['My Dearest','When Life Gives You Tangerines','The Producers','Dream High'],
+  'Park Bo Gum':     ['When Life Gives You Tangerines','Reply 1988'],
+  'Song Hye Kyo':    ['The Glory','Autumn in My Heart'],
+  'Gong Yoo':        ['Coffee Prince'],
+  'Lee Min Ho':      ['Legend of the Blue Sea','The Heirs','Boys Over Flowers'],
+  'Park Seo Joon':   ['Hwarang','Fight for My Way'],
+  'Cha Eun Woo':     ['My ID is Gangnam Beauty','True Beauty'],
+  'Park Bo Young':   ['Strong Woman Do Bong Soon'],
+  'Son Ye Jin':      ['Something in the Rain','Crash Landing on You'],
+  'Kim Go Eun':      ['Cheese in the Trap'],
+  'Lee Sung Kyung':  ['Weightlifting Fairy Kim Bok Ju'],
+  'Park Hyung Sik':  ['Our Blooming Youth','Hwarang'],
+  'Song Joong Ki':   ['Sungkyunkwan Scandal'],
+  'Jang Geun Suk':   ["You're Beautiful"],
+  'Go Kyung Pyo':    ['Reply 1988'],
+  'Lee Dong Wook':   ['A Korean Odyssey'],
+  'Lee Jong Suk':    ['W - Two Worlds'],
+};
+
+function populateActorFilter() {
+  const sel = document.getElementById('filterActor');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Any actor</option>';
+  Object.keys(ACTOR_MAP).sort().forEach(actor => {
+    const opt = document.createElement('option');
+    opt.value = actor; opt.textContent = actor;
+    sel.appendChild(opt);
+  });
+  sel.value = current;
+}
+
+function applyFilters() {
+  const mood   = document.getElementById('filterMood').value;
+  const genre  = document.getElementById('filterGenre').value;
+  const rating = document.getElementById('filterRating').value;
+  const era    = document.getElementById('filterEra').value;
+  const actor  = document.getElementById('filterActor').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+  let list = myDramas.filter(d => {
+    if (mood   && d.mood  !== mood)  return false;
+    if (genre  && d.genre !== genre) return false;
+    if (rating && (d.rating||0) < parseInt(rating)) return false;
+    if (era) {
+      const y = parseInt(d.year||0);
+      if (era === '2020s' && y < 2020) return false;
+      if (era === '2010s' && (y < 2010 || y >= 2020)) return false;
+      if (era === '2000s' && y >= 2010) return false;
+    }
+    if (actor) {
+      const titles = ACTOR_MAP[actor] || [];
+      if (!titles.includes(d.title)) return false;
+    }
+    if (search && !d.title.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  renderMyWallWith(list);
+}
+
+function clearFilters() {
+  document.getElementById('filterMood').value   = '';
+  document.getElementById('filterGenre').value  = '';
+  document.getElementById('filterRating').value = '';
+  document.getElementById('filterEra').value    = '';
+  document.getElementById('filterActor').value  = '';
+  document.getElementById('filterSearch').value = '';
+  renderMyWallWith(myDramas);
 }
 
 function renderMyWall() {
-  const list = myFilter === 'all' ? myDramas : myDramas.filter(d => d.mood === myFilter);
+  populateActorFilter();
+  applyFilters();
+}
+
+function renderMyWallWith(list) {
   const grid = document.getElementById('myGrid');
   let html = `<div class="add-card" onclick="openDramaModal()"><div class="plus">＋</div><span>Add drama</span></div>`;
   if (!list.length) {
-    grid.innerHTML = html + `<div class="empty" style="grid-column:1/-1"><div class="icon">🎬</div><p>No dramas here yet!</p></div>`;
+    grid.innerHTML = html + `<div class="empty" style="grid-column:1/-1"><div class="icon">🔍</div><p>No dramas match your filters.</p></div>`;
     return;
   }
   html += list.map(d => dramaCardHTML(d, true)).join('');
