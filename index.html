@@ -1150,6 +1150,27 @@ function updateGenres() {
   document.querySelectorAll('#genreRow .mood-opt').forEach(b => b.classList.toggle('sel', b.dataset.genre === pickedGenre));
 }
 
+// Compress image to max 800px wide, jpeg quality 0.82
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.82);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function handlePosterChange(e) {
   const file = e.target.files[0]; if (!file) return;
   pendingPosterFile = file;
@@ -1178,13 +1199,33 @@ async function saveDrama() {
 
   // Upload poster if new file selected
   if (pendingPosterFile) {
-    const ext = pendingPosterFile.name.split('.').pop();
-    const path = `${currentUser.id}/${Date.now()}.${ext}`;
-    const { data: upData, error: upErr } = await sb.storage.from('posters').upload(path, pendingPosterFile, { upsert: true });
-    if (!upErr) {
-      const { data: urlData } = sb.storage.from('posters').getPublicUrl(path);
-      poster_url = urlData.publicUrl;
+    try {
+      btn.innerHTML = '<span class="spinner"></span> Uploading image...';
+      const compressed = await compressImage(pendingPosterFile);
+      const path = `${currentUser.id}/${Date.now()}.jpg`;
+
+      // Add 15 second timeout
+      const uploadPromise = sb.storage.from('posters').upload(path, compressed, {
+        upsert: true, contentType: 'image/jpeg'
+      });
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timed out')), 15000)
+      );
+
+      const { data: upData, error: upErr } = await Promise.race([uploadPromise, timeoutPromise]);
+
+      if (upErr) {
+        console.error('Upload error:', upErr);
+        toast('⚠️ Image upload failed — saving without poster');
+      } else {
+        const { data: urlData } = sb.storage.from('posters').getPublicUrl(path);
+        poster_url = urlData.publicUrl;
+      }
+    } catch (err) {
+      console.error('Upload exception:', err.message);
+      toast('⚠️ Image upload timed out — saving without poster');
     }
+    btn.innerHTML = '<span class="spinner"></span>';
   }
 
   const payload = {
